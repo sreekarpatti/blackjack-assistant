@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+venv/
+.env
+.pytest_cache/
+.mypy_cache/
+.coverage
+
+# OS / editor
+.DS_Store
+.vscode/
+
+# Data and model artifacts
+cv_pipeline/data/raw/
+cv_pipeline/data/processed/
+cv_pipeline/data/splits/
+cv_pipeline/detection/weights/
+cv_pipeline/output/
+rl_agent/models/
+
+# Keep best checkpoint tracked if desired
+!rl_agent/models/best_model.zip

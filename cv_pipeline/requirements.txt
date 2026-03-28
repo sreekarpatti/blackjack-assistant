@@ -1,0 +1,11 @@
+ultralytics>=8.0
+opencv-python>=4.8
+numpy
+torch>=2.0
+torchvision
+bytetracker
+PyYAML
+kaggle
+albumentations
+wandb
+pytest
