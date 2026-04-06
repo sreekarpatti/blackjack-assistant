@@ -52,10 +52,13 @@ class Card:
         """Construct a card from detector label text.
 
         Args:
-            label: Card label like "Kh" or "10d".
+            label: Card label like "Kh", "10d", or rank-only like "Card-10".
 
         Returns:
             Card instance with computed Hi-Lo value.
         """
+        if label.startswith("Card-"):
+            rank = label[5:]
+            return cls(rank=rank, suit="?", hi_lo_value=card_to_hi_lo(rank))
         rank, suit = label[:-1], label[-1]
         return cls(rank=rank, suit=suit, hi_lo_value=card_to_hi_lo(rank))

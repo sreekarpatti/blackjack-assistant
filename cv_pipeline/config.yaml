@@ -1,4 +1,5 @@
-model_path: cv_pipeline/detection/weights/best.pt
+table_detector_path: cv_pipeline/detection/weights/table_detector.pt
+card_classifier_path: cv_pipeline/detection/weights/card_classifier.pt
 video_source: ""
 output_path: cv_pipeline/output/annotated_output.mp4
 
@@ -19,8 +20,8 @@ counting:
     ">=4": 6
 
 tracking:
-  max_missed_frames: 10
-  iou_match_threshold: 0.3
+  max_missed_frames: 30
+  iou_match_threshold: 0.2
 
 training:
   data_yaml: cv_pipeline/data/processed/data.yaml

@@ -19,6 +19,7 @@ class TrackedCard:
     bbox: Tuple[int, int, int, int]
     confidence: float
     missed_frames: int = 0
+    seen_frames: int = 1
 
 
 class ByteTrackWrapper:
@@ -74,6 +75,7 @@ class ByteTrackWrapper:
             track.card = Card.from_label(det.label)
             track.card.is_counted = self.tracks[best_track_id].card.is_counted
             track.missed_frames = 0
+            track.seen_frames += 1
             unmatched_track_ids.discard(best_track_id)
 
         for track_id in list(unmatched_track_ids):

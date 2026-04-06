@@ -3,7 +3,8 @@ opencv-python>=4.8
 numpy
 torch>=2.0
 torchvision
-bytetracker
+# bytetracker — install manually: pip install lapx && pip install --no-deps bytetracker
+lapx
 PyYAML
 kaggle
 albumentations

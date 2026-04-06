@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Set
 
 from common.card import Card
 from cv_pipeline.strategy.shoe import ShoeState
@@ -14,9 +15,23 @@ class HiLoCounter:
 
     shoe: ShoeState
     running_count: int = 0
+    _counted_track_ids: Set[int] = field(default_factory=set)
+
+    def update_track(self, track_id: int, card: Card) -> None:
+        """Apply a tracked card to running count if this track hasn't been counted.
+
+        Args:
+            track_id: Unique track identifier.
+            card: Card observation.
+        """
+        if track_id in self._counted_track_ids:
+            return
+        self._counted_track_ids.add(track_id)
+        self.running_count += card.hi_lo_value
+        self.shoe.observe_card(1)
 
     def update(self, card: Card) -> None:
-        """Apply a card to running count if not counted yet.
+        """Legacy update method for backwards compatibility.
 
         Args:
             card: Card observation.
@@ -40,4 +55,5 @@ class HiLoCounter:
     def reset(self) -> None:
         """Reset running count and shoe state for new shoe."""
         self.running_count = 0
+        self._counted_track_ids.clear()
         self.shoe.reset()

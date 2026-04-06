@@ -8,7 +8,7 @@ from typing import Dict, Tuple
 import numpy as np
 import yaml
 
-from cv_pipeline.detection.inference import CardDetector
+from cv_pipeline.detection.inference import TwoStageDetector
 from cv_pipeline.detection.perspective import warp
 from cv_pipeline.detection.tracker import ByteTrackWrapper
 from cv_pipeline.strategy import advisor
@@ -22,7 +22,7 @@ from cv_pipeline.ui.overlay import draw
 class RuntimeContext:
     """Runtime singletons for process_frame usage."""
 
-    detector: CardDetector
+    detector: TwoStageDetector
     tracker: ByteTrackWrapper
     counter: HiLoCounter
     config: Dict[str, object]
@@ -41,10 +41,13 @@ def initialize_runtime(config_path: str) -> None:
     cfg = yaml.safe_load(open(config_path, "r", encoding="utf-8"))
     counter = HiLoCounter(shoe=ShoeState(decks_total=int(cfg["counting"].get("decks_total", 6))))
     _RUNTIME = RuntimeContext(
-        detector=CardDetector(str(cfg.get("model_path", ""))),
+        detector=TwoStageDetector(
+            table_detector_path=str(cfg.get("table_detector_path", "")),
+            card_classifier_path=str(cfg.get("card_classifier_path", "")),
+        ),
         tracker=ByteTrackWrapper(
-            max_missed_frames=int(cfg["tracking"].get("max_missed_frames", 10)),
-            iou_match_threshold=float(cfg["tracking"].get("iou_match_threshold", 0.3)),
+            max_missed_frames=int(cfg["tracking"].get("max_missed_frames", 30)),
+            iou_match_threshold=float(cfg["tracking"].get("iou_match_threshold", 0.2)),
         ),
         counter=counter,
         config=cfg,
@@ -71,11 +74,12 @@ def process_frame(frame: np.ndarray, state: GameState) -> Tuple[np.ndarray, Game
 
     cfg = _RUNTIME.config
     warped = warp(frame, cfg.get("table", {}).get("warp_points"))
-    detections = _RUNTIME.detector.detect(warped)
+    detections = _RUNTIME.detector.detect(warped, conf_threshold=0.2)
     tracks = _RUNTIME.tracker.update(detections)
 
     for track in tracks:
-        _RUNTIME.counter.update(track.card)
+        if track.seen_frames >= 10:
+            _RUNTIME.counter.update_track(track.track_id, track.card)
 
     state = update_from_tracks(
         state,
