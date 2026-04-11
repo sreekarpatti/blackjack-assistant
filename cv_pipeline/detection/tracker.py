@@ -10,6 +10,9 @@ from cv_pipeline.detection.inference import Detection
 from cv_pipeline.detection.utils import iou
 
 
+CONFIRMED_THRESHOLD = 10  # frames needed to confirm a card
+
+
 @dataclass
 class TrackedCard:
     """Tracked card state tied to a persistent track ID."""
@@ -20,6 +23,7 @@ class TrackedCard:
     confidence: float
     missed_frames: int = 0
     seen_frames: int = 1
+    confirmed: bool = False
 
 
 class ByteTrackWrapper:
@@ -76,11 +80,21 @@ class ByteTrackWrapper:
             track.card.is_counted = self.tracks[best_track_id].card.is_counted
             track.missed_frames = 0
             track.seen_frames += 1
+            if track.seen_frames >= CONFIRMED_THRESHOLD:
+                track.confirmed = True
             unmatched_track_ids.discard(best_track_id)
 
+        # If no detections at all, the table is clear — reset all tracks
+        if not detections:
+            self.tracks.clear()
+            return []
+
+        # Only drop unconfirmed tracks after max_missed_frames
+        # Confirmed tracks persist until the table clears
         for track_id in list(unmatched_track_ids):
-            self.tracks[track_id].missed_frames += 1
-            if self.tracks[track_id].missed_frames > self.max_missed_frames:
+            track = self.tracks[track_id]
+            track.missed_frames += 1
+            if not track.confirmed and track.missed_frames > self.max_missed_frames:
                 del self.tracks[track_id]
 
         return list(self.tracks.values())

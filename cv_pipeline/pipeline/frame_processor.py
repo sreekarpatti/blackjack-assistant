@@ -74,7 +74,7 @@ def process_frame(frame: np.ndarray, state: GameState) -> Tuple[np.ndarray, Game
 
     cfg = _RUNTIME.config
     warped = warp(frame, cfg.get("table", {}).get("warp_points"))
-    detections = _RUNTIME.detector.detect(warped, conf_threshold=0.2)
+    detections = _RUNTIME.detector.detect(warped, conf_threshold=0.35)
     tracks = _RUNTIME.tracker.update(detections)
 
     for track in tracks:
