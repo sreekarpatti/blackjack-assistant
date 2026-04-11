@@ -13,11 +13,16 @@ venv/
 .DS_Store
 .vscode/
 
+# Large files
+cv_pipeline/data/annotate_frames.zip
+cv_pipeline/data/card_classifier.zip
+cv_pipeline/data/table_detection.zip
+video_feed.mp4
+
 # Data and model artifacts
 cv_pipeline/data/raw/
 cv_pipeline/data/processed/
 cv_pipeline/data/splits/
-cv_pipeline/detection/weights/
 cv_pipeline/output/
 rl_agent/models/
 
