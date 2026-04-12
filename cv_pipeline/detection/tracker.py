@@ -11,6 +11,7 @@ from cv_pipeline.detection.utils import iou
 
 
 CONFIRMED_THRESHOLD = 10  # frames needed to confirm a card
+NEW_CARD_THRESHOLD = 5    # consecutive mismatched frames before accepting a new card on top
 
 
 @dataclass
@@ -24,6 +25,9 @@ class TrackedCard:
     missed_frames: int = 0
     seen_frames: int = 1
     confirmed: bool = False
+    # Tracks a candidate new-card label appearing at this position
+    candidate_label: str | None = None
+    candidate_frames: int = 0
 
 
 class ByteTrackWrapper:
@@ -61,11 +65,35 @@ class ByteTrackWrapper:
                     best_iou = score
                     best_track_id = track_id
 
+            det_card = Card.from_label(det.label)
+
+            # If matched a confirmed track but label differs, a new card may
+            # have been placed on top.  Only accept it after the new label is
+            # stable for NEW_CARD_THRESHOLD consecutive frames to filter out
+            # classifier flicker.
+            if best_track_id is not None:
+                matched_track = self.tracks[best_track_id]
+                if matched_track.confirmed and det_card.label != matched_track.card.label:
+                    if matched_track.candidate_label == det_card.label:
+                        matched_track.candidate_frames += 1
+                    else:
+                        matched_track.candidate_label = det_card.label
+                        matched_track.candidate_frames = 1
+
+                    if matched_track.candidate_frames >= NEW_CARD_THRESHOLD:
+                        # Stable new label — accept as a genuinely new card
+                        matched_track.candidate_label = None
+                        matched_track.candidate_frames = 0
+                        best_track_id = None
+                    else:
+                        # Not yet stable — keep matching to existing track
+                        unmatched_track_ids.discard(best_track_id)
+                        continue
+
             if best_track_id is None:
-                card = Card.from_label(det.label)
                 self.tracks[self.next_track_id] = TrackedCard(
                     track_id=self.next_track_id,
-                    card=card,
+                    card=det_card,
                     bbox=det.bbox,
                     confidence=det.confidence,
                     missed_frames=0,
@@ -76,8 +104,11 @@ class ByteTrackWrapper:
             track = self.tracks[best_track_id]
             track.bbox = det.bbox
             track.confidence = det.confidence
-            track.card = Card.from_label(det.label)
-            track.card.is_counted = self.tracks[best_track_id].card.is_counted
+            track.candidate_label = None
+            track.candidate_frames = 0
+            if not track.confirmed:
+                track.card = det_card
+                track.card.is_counted = self.tracks[best_track_id].card.is_counted
             track.missed_frames = 0
             track.seen_frames += 1
             if track.seen_frames >= CONFIRMED_THRESHOLD:
