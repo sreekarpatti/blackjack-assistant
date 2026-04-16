@@ -38,7 +38,12 @@ def initialize_runtime(config_path: str) -> None:
         config_path: Path to cv_pipeline config.
     """
     global _RUNTIME
-    cfg = yaml.safe_load(open(config_path, "r", encoding="utf-8"))
+    try:
+        cfg = yaml.safe_load(open(config_path, "r", encoding="utf-8"))
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Config file not found: {config_path}")
+    except yaml.YAMLError as exc:
+        raise ValueError(f"Malformed config file {config_path}: {exc}") from exc
     counter = HiLoCounter(shoe=ShoeState(decks_total=int(cfg["counting"].get("decks_total", 6))))
     _RUNTIME = RuntimeContext(
         detector=TwoStageDetector(

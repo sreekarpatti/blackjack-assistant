@@ -1,10 +1,11 @@
 import gymnasium as gym
 import numpy as np
 import pickle
+from pathlib import Path
 from gymnasium import spaces
 
 
-SNAPSHOT_PATH = "/Users/krishbansal/Desktop/ai-project/rl-agent-black-count/snapshot_library.pkl"
+SNAPSHOT_PATH = Path(__file__).resolve().parents[2] / "snapshot_library.pkl"
 ALL_BUCKETS = [-4, -3, -2, -1, 0, 1, 2, 3, 4]
 RESHUFFLE_AT = 78
 
