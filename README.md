@@ -26,13 +26,7 @@ make train-cv
 make train-rl
 ```
 
-### 4. Run tests
-
-```bash
-make test
-```
-
-### 5. Run assistant on a video file
+### 4. Run assistant on a video file
 
 ```bash
 make run SOURCE=path/to/video.mp4
